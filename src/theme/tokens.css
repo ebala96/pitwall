@@ -1,0 +1,66 @@
+:root {
+  /* base surfaces */
+  --bg: #0b0e14;
+  --panel: #121620;
+  --panel-2: #181d2a;
+  --border: #232a3a;
+
+  /* text */
+  --text: #e6e9f0;
+  --text-dim: #9aa3b2;
+  --text-faint: #5e6677;
+
+  /* accent (F1 broadcast red) */
+  --accent: #e10600;
+  --accent-dim: #8a1410;
+
+  /* status */
+  --ok: #2ecc71;
+  --warn: #ffc107;
+  --bad: #ff4d4f;
+  --live: #ff2d2d;
+
+  /* timing colors */
+  --purple: #b455ff; /* session best */
+  --green: #2ecc71; /* personal best */
+  --yellow: #ffd23f;
+
+  /* layout */
+  --row-h: 30px;
+  --radius: 8px;
+  --tab-w: 132px;
+  --strip-h: 48px;
+
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* tabular numerals everywhere timing numbers appear */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
