@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { QueryBoundary } from '../components/QueryBoundary.jsx'
 import { Segmented } from '../components/Segmented.jsx'
 import { StandingsTable } from '../components/standings/StandingsTable.jsx'
-import { DEFAULT_SEASON } from '../config.js'
+import { useSeason } from '../hooks/useSeason.js'
 import { useConstructorStandings, useDriverStandings } from '../hooks/useStandings.js'
 
 export default function Standings() {
   const [kind, setKind] = useState('drivers')
-  const season = DEFAULT_SEASON
+  const season = useSeason()
 
   const drivers = useDriverStandings(season)
   const constructors = useConstructorStandings(season)

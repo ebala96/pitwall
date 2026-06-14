@@ -1,12 +1,12 @@
 import { useParams } from 'react-router-dom'
 import { QueryBoundary } from '../components/QueryBoundary.jsx'
 import { ProfileView } from '../components/profile/ProfileView.jsx'
-import { DEFAULT_SEASON } from '../config.js'
 import { useConstructorProfile, useDriverProfile } from '../hooks/useProfile.js'
+import { useSeason } from '../hooks/useSeason.js'
 
 export default function Profile() {
   const { type, id } = useParams()
-  const season = DEFAULT_SEASON
+  const season = useSeason()
 
   const driver = useDriverProfile(season, type === 'driver' ? id : null)
   const constructor = useConstructorProfile(season, type === 'constructor' ? id : null)

@@ -1,8 +1,8 @@
 import { QueryBoundary } from '../components/QueryBoundary.jsx'
 import { NextRaceCard } from '../components/schedule/NextRaceCard.jsx'
 import { RaceList } from '../components/schedule/RaceList.jsx'
-import { DEFAULT_SEASON } from '../config.js'
 import { useSchedule } from '../hooks/useSchedule.js'
+import { useSeason } from '../hooks/useSeason.js'
 import { useNow } from '../hooks/useNow.js'
 
 function pickNextRace(races, now) {
@@ -10,7 +10,7 @@ function pickNextRace(races, now) {
 }
 
 export default function Schedule() {
-  const season = DEFAULT_SEASON
+  const season = useSeason()
   const query = useSchedule(season)
   const now = useNow(30000)
 

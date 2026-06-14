@@ -4,9 +4,9 @@ import { Segmented } from '../components/Segmented.jsx'
 import { EventPicker } from '../components/results/EventPicker.jsx'
 import { QualifyingTable } from '../components/results/QualifyingTable.jsx'
 import { ResultsTable } from '../components/results/ResultsTable.jsx'
-import { DEFAULT_SEASON } from '../config.js'
 import { useNow } from '../hooks/useNow.js'
 import { useSchedule } from '../hooks/useSchedule.js'
+import { useSeason } from '../hooks/useSeason.js'
 import { useQualifying, useRaceResults } from '../hooks/useResults.js'
 
 function latestCompletedRound(races, now) {
@@ -18,7 +18,7 @@ function latestCompletedRound(races, now) {
 }
 
 export default function Results() {
-  const season = DEFAULT_SEASON
+  const season = useSeason()
   const now = useNow(60000)
   const sched = useSchedule(season)
   const races = sched.data?.races ?? []

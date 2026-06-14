@@ -5,15 +5,15 @@ import { RaceControlFeed } from '../components/live/RaceControlFeed.jsx'
 import { SessionHeader } from '../components/live/SessionHeader.jsx'
 import { WeatherCard } from '../components/live/WeatherCard.jsx'
 import { getLiveSessionState } from '../data/liveState.js'
-import { DEFAULT_SEASON } from '../config.js'
 import { useNow } from '../hooks/useNow.js'
 import { useRaceResults } from '../hooks/useResults.js'
 import { useSchedule } from '../hooks/useSchedule.js'
+import { useSeason } from '../hooks/useSeason.js'
 import { useSessionDetail } from '../hooks/useSessionDetail.js'
 import { latestTyreByDriver } from '../lib/tyres.js'
 
 export default function Live() {
-  const season = DEFAULT_SEASON
+  const season = useSeason()
   const now = useNow(30000)
   const sched = useSchedule(season)
   const races = sched.data?.races ?? []

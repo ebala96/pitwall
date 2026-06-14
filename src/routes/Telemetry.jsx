@@ -6,10 +6,10 @@ import { TyreStrategyTimeline } from '../components/charts/TyreStrategyTimeline.
 import { DriverMultiSelect } from '../components/telemetry/DriverMultiSelect.jsx'
 import { LapSelector } from '../components/telemetry/LapSelector.jsx'
 import { SessionSelector } from '../components/telemetry/SessionSelector.jsx'
-import { DEFAULT_SEASON } from '../config.js'
 import { fastestLapNumber } from '../lib/chartData.js'
 import { useNow } from '../hooks/useNow.js'
 import { useSchedule } from '../hooks/useSchedule.js'
+import { useSeason } from '../hooks/useSeason.js'
 import { useSessionDetail } from '../hooks/useSessionDetail.js'
 import { useLapTelemetry, useTelemetryLaps } from '../hooks/useTelemetry.js'
 
@@ -35,7 +35,7 @@ const notice = (text) => (
 
 export default function Telemetry() {
   const now = useNow(60000)
-  const [season, setSeason] = useState(DEFAULT_SEASON)
+  const [season, setSeason] = useState(useSeason())
   const [pickedRound, setPickedRound] = useState(null)
   const [pickedDrivers, setPickedDrivers] = useState([])
   const [pickedLap, setPickedLap] = useState(null)
