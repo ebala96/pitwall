@@ -6,3 +6,6 @@ dist-ssr
 *.local
 .DS_Store
 npm-debug.log*
+
+# internal build plan (kept local, not published)
+PLAN.md
