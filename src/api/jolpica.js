@@ -3,6 +3,8 @@ import { fetchJson } from './http.js'
 import {
   mapConstructorStandings,
   mapDriverStandings,
+  mapQualifying,
+  mapRaceResults,
   mapSchedule,
   mapSeasons,
 } from '../mappers/jolpica.map.js'
@@ -137,4 +139,79 @@ export async function listSeasons(signal) {
 export async function getSchedule(season, signal) {
   const raw = await fetchJson(`/api/jolpi/${season}.json`, { schema: scheduleResponse, signal })
   return mapSchedule(raw)
+}
+
+const Time = z.object({ millis: z.string().optional(), time: z.string().optional() }).optional()
+
+const resultsResponse = z.object({
+  MRData: z.object({
+    RaceTable: z.object({
+      Races: z.array(
+        z.object({
+          season: z.string(),
+          round: z.string(),
+          raceName: z.string(),
+          Results: z.array(
+            z.object({
+              position: z.string(),
+              points: z.string(),
+              grid: z.string(),
+              laps: z.string().optional(),
+              status: z.string(),
+              Driver,
+              Constructor,
+              Time,
+              FastestLap: z
+                .object({
+                  rank: z.string().optional(),
+                  lap: z.string().optional(),
+                  Time: z.object({ time: z.string().optional() }).optional(),
+                })
+                .optional(),
+            }),
+          ),
+        }),
+      ),
+    }),
+  }),
+})
+
+const qualifyingResponse = z.object({
+  MRData: z.object({
+    RaceTable: z.object({
+      Races: z.array(
+        z.object({
+          season: z.string(),
+          round: z.string(),
+          raceName: z.string(),
+          QualifyingResults: z.array(
+            z.object({
+              position: z.string(),
+              Driver,
+              Constructor,
+              Q1: z.string().optional(),
+              Q2: z.string().optional(),
+              Q3: z.string().optional(),
+            }),
+          ),
+        }),
+      ),
+    }),
+  }),
+})
+
+export async function getRaceResults(season, round, signal) {
+  const raw = await fetchJson(`/api/jolpi/${season}/${round}/results.json`, {
+    schema: resultsResponse,
+    signal,
+  })
+  return mapRaceResults(raw)
+}
+
+export async function getQualifying(season, round, signal) {
+  const raw = await fetchJson(`/api/jolpi/${season}/${round}/qualifying.json`, {
+    schema: qualifyingResponse,
+    signal,
+  })
+  return mapQualifying(raw)
 }

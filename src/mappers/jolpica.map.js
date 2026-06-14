@@ -59,6 +59,60 @@ const SESSION_LABELS = [
   ['Qualifying', 'Quali'],
 ]
 
+export function mapRaceResults(raw) {
+  const race = raw.MRData.RaceTable.Races[0]
+  if (!race) return { name: null, round: null, rows: [] }
+  return {
+    name: race.raceName,
+    round: Number(race.round),
+    rows: race.Results.map((r) => {
+      const grid = Number(r.grid)
+      const position = Number(r.position)
+      return {
+        position,
+        driverId: r.Driver.driverId,
+        code: code(r.Driver),
+        name: `${r.Driver.givenName} ${r.Driver.familyName}`,
+        number: r.Driver.permanentNumber ?? null,
+        constructorId: r.Constructor.constructorId,
+        constructorName: r.Constructor.name,
+        grid,
+        // grid→finish delta; null for pit-lane start (grid 0)
+        delta: grid === 0 ? null : grid - position,
+        laps: r.laps ? Number(r.laps) : null,
+        status: r.status,
+        time: r.Time?.time ?? null,
+        points: Number(r.points),
+        fastestLap: r.FastestLap
+          ? { rank: r.FastestLap.rank ? Number(r.FastestLap.rank) : null, time: r.FastestLap.Time?.time ?? null }
+          : null,
+      }
+    }),
+  }
+}
+
+export function mapQualifying(raw) {
+  const race = raw.MRData.RaceTable.Races[0]
+  if (!race) return { name: null, round: null, rows: [] }
+  return {
+    name: race.raceName,
+    round: Number(race.round),
+    rows: race.QualifyingResults.map((q) => ({
+      position: Number(q.position),
+      driverId: q.Driver.driverId,
+      code: code(q.Driver),
+      name: `${q.Driver.givenName} ${q.Driver.familyName}`,
+      constructorId: q.Constructor.constructorId,
+      constructorName: q.Constructor.name,
+      q1: q.Q1 || null,
+      q2: q.Q2 || null,
+      q3: q.Q3 || null,
+      // which segment the driver reached (for dimming eliminated rows)
+      segment: q.Q3 ? 3 : q.Q2 ? 2 : 1,
+    })),
+  }
+}
+
 export function mapSchedule(raw) {
   const races = raw.MRData.RaceTable.Races.map((r) => {
     const sessions = []
