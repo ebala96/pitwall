@@ -20,28 +20,24 @@ export function StandingsTable({ kind, rows }) {
               {r.position ?? '—'}
             </span>
             <span style={{ ...bar, background: color }} />
-            <span style={primary}>
-              {isDrivers ? (
-                <>
-                  <strong>{r.code}</strong>
-                  <span style={{ color: 'var(--text-dim)' }}>{r.name}</span>
-                </>
-              ) : (
-                <strong>{r.constructorName}</strong>
-              )}
-            </span>
-            {isDrivers && (
-              <span style={{ color: 'var(--text-faint)', fontSize: 12, minWidth: 90 }}>
-                {r.constructorName ?? ''}
+            {isDrivers ? (
+              <>
+                <span style={code}>{r.code}</span>
+                <span style={name} title={r.name}>
+                  {r.name}
+                </span>
+                <span style={team} title={r.constructorName ?? ''}>
+                  {r.constructorName ?? ''}
+                </span>
+              </>
+            ) : (
+              <span style={teamName} title={r.constructorName}>
+                {r.constructorName}
               </span>
             )}
             <span style={gapWrap}>
               <span
-                style={{
-                  ...gapBar,
-                  width: `${pct(r.points, leaderPoints)}%`,
-                  background: color,
-                }}
+                style={{ ...gapBar, width: `${pct(r.points, leaderPoints)}%`, background: color }}
               />
             </span>
             <span className="tnum" style={wins} title="wins">
@@ -74,10 +70,16 @@ const row = {
   color: 'var(--text)',
 }
 
-const pos = { width: 24, textAlign: 'right', color: 'var(--text-dim)' }
+// Fixed-width columns so every gap bar starts at the same x regardless of name length.
+const ellipsis = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 0 auto' }
+
+const pos = { width: 24, textAlign: 'right', color: 'var(--text-dim)', flex: '0 0 auto' }
 const bar = { width: 4, height: '60%', borderRadius: 2, flex: '0 0 auto' }
-const primary = { display: 'flex', gap: 8, alignItems: 'baseline', minWidth: 150 }
+const code = { width: 40, fontWeight: 700, flex: '0 0 auto' }
+const name = { ...ellipsis, width: 160, color: 'var(--text-dim)' }
+const team = { ...ellipsis, width: 96, color: 'var(--text-faint)', fontSize: 12 }
+const teamName = { ...ellipsis, width: 296, fontWeight: 700 }
 const gapWrap = { flex: 1, height: 6, background: 'var(--panel-2)', borderRadius: 3, overflow: 'hidden' }
 const gapBar = { display: 'block', height: '100%', borderRadius: 3, opacity: 0.7 }
-const wins = { width: 36, textAlign: 'right', color: 'var(--text-faint)', fontSize: 12 }
-const points = { width: 56, textAlign: 'right', fontWeight: 700 }
+const wins = { width: 36, textAlign: 'right', color: 'var(--text-faint)', fontSize: 12, flex: '0 0 auto' }
+const points = { width: 56, textAlign: 'right', fontWeight: 700, flex: '0 0 auto' }
