@@ -90,6 +90,13 @@ const carDataSchema = z.object({
   drs: z.number().nullable().optional(),
 })
 
+const locationSchema = z.object({
+  driver_number: z.number(),
+  date: z.string(),
+  x: z.number().nullable().optional(),
+  y: z.number().nullable().optional(),
+})
+
 const raceControlSchema = z.object({
   date: z.string().optional(),
   category: z.string().nullable().optional(),
@@ -178,4 +185,14 @@ export async function getCarData({ sessionKey, driverNumber, dateStart, dateEnd 
   if (dateStart) path += `&date>=${encodeURIComponent(dateStart)}`
   if (dateEnd) path += `&date<=${encodeURIComponent(dateEnd)}`
   return fetchJson(path, { schema: z.array(carDataSchema), signal })
+}
+
+// Track position (x,y) time series, windowed by date. Omit driverNumber to fetch
+// all drivers in one request (preferred for the track map — no per-driver fan-out).
+export async function getLocation({ sessionKey, driverNumber, dateStart, dateEnd }, signal) {
+  let path = `/api/openf1/location?session_key=${sessionKey}`
+  if (driverNumber != null) path += `&driver_number=${driverNumber}`
+  if (dateStart) path += `&date>=${encodeURIComponent(dateStart)}`
+  if (dateEnd) path += `&date<=${encodeURIComponent(dateEnd)}`
+  return fetchJson(path, { schema: z.array(locationSchema), signal })
 }

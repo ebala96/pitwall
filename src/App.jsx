@@ -6,6 +6,7 @@ import Schedule from './routes/Schedule.jsx'
 import Standings from './routes/Standings.jsx'
 import Results from './routes/Results.jsx'
 import Telemetry from './routes/Telemetry.jsx'
+import Track from './routes/Track.jsx'
 import Profile from './routes/Profile.jsx'
 import Settings from './routes/Settings.jsx'
 
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/standings" element={<Standings />} />
         <Route path="/results" element={<Results />} />
         <Route path="/telemetry" element={<Telemetry />} />
+        <Route path="/track" element={<Track />} />
         <Route path="/profile/:type/:id" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/live" replace />} />
