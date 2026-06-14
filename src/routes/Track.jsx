@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { RaceSegmentSelect } from '../components/RaceSegmentSelect.jsx'
 import { TrackCanvas } from '../components/track/TrackCanvas.jsx'
 import { SessionSelector } from '../components/telemetry/SessionSelector.jsx'
 import { getLiveSessionState } from '../data/liveState.js'
 import { computeBounds, sampleAt } from '../lib/trackMap.js'
+import { segmentByValue } from '../lib/raceSegments.js'
 import { useAnimatedCursor } from '../hooks/useAnimatedCursor.js'
 import { useNow } from '../hooks/useNow.js'
 import { useResolvedSession } from '../hooks/useResolvedSession.js'
@@ -38,6 +40,7 @@ export default function Track() {
   const [pickedRound, setPickedRound] = useState(null)
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(8)
+  const [segment, setSegment] = useState('full')
 
   const sched = useSchedule(season)
   const races = sched.data?.races ?? []
@@ -51,6 +54,9 @@ export default function Track() {
   const start = resolved.data?.start ?? null
   const end = resolved.data?.end ?? null
   const durationSec = start && end ? (end - start) / 1000 : 0
+  const seg = segmentByValue(segment)
+  const segStart = durationSec * seg.from
+  const segEnd = durationSec * seg.to
 
   const driversQ = useSessionDrivers(sessionKey)
   const outline = useTrackOutline(sessionKey, start, end)
@@ -58,7 +64,7 @@ export default function Track() {
   const bounds = useMemo(() => computeBounds({ o: outline.data?.points ?? [] }), [outline.data])
 
   // Replay: full-race cursor + lazily-loaded 60s windows (current + prefetch next).
-  const [cursor, setCursor] = useAnimatedCursor(durationSec, { playing: playing && !isLive, speed })
+  const [cursor, setCursor] = useAnimatedCursor(segStart, segEnd, { playing: playing && !isLive, speed })
   const replayEnabled = !isLive && Boolean(sessionKey) && durationSec > 0
   const winIndex = Math.floor(cursor / WIN)
   const winStartMs = start != null ? start + winIndex * WIN * 1000 : null
@@ -70,7 +76,7 @@ export default function Track() {
   // Live: most-recent 60s window (re-keyed every 12s -> polls) animated on a loop.
   const liveWinStart = Math.floor(now / 12000) * 12000 - WIN * 1000
   const liveWin = useTrackWindow(sessionKey, liveWinStart, WIN, { enabled: isLive, live: true })
-  const [liveCursor] = useAnimatedCursor(WIN, { playing: isLive, speed: 1, loop: true })
+  const [liveCursor] = useAnimatedCursor(0, WIN, { playing: isLive, speed: 1, loop: true })
 
   const activeByDriver = isLive ? liveWin.data : cur.data
   const sampleT = isLive ? liveCursor : cursor - winIndex * WIN
@@ -90,13 +96,19 @@ export default function Track() {
   function changeSeason(y) {
     setSeason(y)
     setPickedRound(null)
+    setSegment('full')
     setCursor(0)
     setPlaying(false)
   }
   function changeRound(r) {
     setPickedRound(r)
+    setSegment('full')
     setCursor(0)
     setPlaying(false)
+  }
+  function changeSegment(v) {
+    setSegment(v)
+    setCursor(durationSec * segmentByValue(v).from)
   }
 
   return (
@@ -120,12 +132,13 @@ export default function Track() {
       ) : (
         <>
           <div style={controls}>
+            <RaceSegmentSelect value={segment} onChange={changeSegment} />
             <button onClick={() => setPlaying((p) => !p)} style={btn} disabled={!durationSec}>
               {playing ? '❚❚ Pause' : '▶ Play'}
             </button>
-            <input type="range" min={0} max={durationSec || 1} step={1} value={cursor} onChange={(e) => setCursor(Number(e.target.value))} style={{ flex: 1 }} disabled={!durationSec} />
+            <input type="range" min={segStart} max={segEnd || 1} step={1} value={cursor} onChange={(e) => setCursor(Number(e.target.value))} style={{ flex: 1 }} disabled={!durationSec} />
             <span className="tnum" style={{ color: 'var(--text-dim)', fontSize: 12, width: 110, textAlign: 'right' }}>
-              {mmss(cursor)} / {mmss(durationSec)}
+              {mmss(cursor)} / {mmss(segEnd)}
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
               {SPEEDS.map((s) => (

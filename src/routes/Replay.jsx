@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { LiveTimingBoard } from '../components/live/LiveTimingBoard.jsx'
+import { RaceSegmentSelect } from '../components/RaceSegmentSelect.jsx'
 import { SessionSelector } from '../components/telemetry/SessionSelector.jsx'
 import { buildReplayRows, currentLapAsOf, leaderLap, totalLaps } from '../lib/replay.js'
+import { segmentByValue } from '../lib/raceSegments.js'
+import { useAnimatedCursor } from '../hooks/useAnimatedCursor.js'
 import { useNow } from '../hooks/useNow.js'
 import { useReplayData } from '../hooks/useReplayData.js'
 import { useSchedule } from '../hooks/useSchedule.js'
@@ -30,10 +33,9 @@ export default function Replay() {
   const now = useNow(60000)
   const [season, setSeason] = useState(useSeason())
   const [pickedRound, setPickedRound] = useState(null)
-  const [cursor, setCursor] = useState(0) // seconds from session start
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(30)
-  const lastRef = useRef(null)
+  const [segment, setSegment] = useState('full')
 
   const sched = useSchedule(season)
   const races = sched.data?.races ?? []
@@ -42,24 +44,11 @@ export default function Replay() {
 
   const data = replay.data
   const durationSec = data?.sessionKey ? Math.max(1, (data.end - data.start) / 1000) : 0
+  const seg = segmentByValue(segment)
+  const segStart = durationSec * seg.from
+  const segEnd = durationSec * seg.to
 
-  useEffect(() => {
-    if (!playing || !durationSec) return
-    let id
-    const step = (ts) => {
-      if (lastRef.current != null) {
-        const dt = ((ts - lastRef.current) / 1000) * speed
-        setCursor((c) => (c + dt >= durationSec ? durationSec : c + dt))
-      }
-      lastRef.current = ts
-      id = requestAnimationFrame(step)
-    }
-    id = requestAnimationFrame(step)
-    return () => {
-      cancelAnimationFrame(id)
-      lastRef.current = null
-    }
-  }, [playing, speed, durationSec])
+  const [cursor, setCursor] = useAnimatedCursor(segStart, segEnd, { playing, speed })
 
   const asOf = data?.sessionKey ? data.start + cursor * 1000 : 0
   const rows = useMemo(
@@ -75,13 +64,19 @@ export default function Replay() {
   function changeSeason(y) {
     setSeason(y)
     setPickedRound(null)
+    setSegment('full')
     setCursor(0)
     setPlaying(false)
   }
   function changeRound(r) {
     setPickedRound(r)
+    setSegment('full')
     setCursor(0)
     setPlaying(false)
+  }
+  function changeSegment(v) {
+    setSegment(v)
+    setCursor(durationSec * segmentByValue(v).from)
   }
 
   return (
@@ -98,13 +93,14 @@ export default function Replay() {
       ) : (
         <>
           <div style={controls}>
+            <RaceSegmentSelect value={segment} onChange={changeSegment} />
             <button onClick={() => setPlaying((p) => !p)} style={btn}>
               {playing ? '❚❚ Pause' : '▶ Play'}
             </button>
             <input
               type="range"
-              min={0}
-              max={durationSec}
+              min={segStart}
+              max={segEnd || 1}
               step={1}
               value={cursor}
               onChange={(e) => setCursor(Number(e.target.value))}
