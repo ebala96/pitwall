@@ -11,14 +11,14 @@ import { classify } from '../data/ttl.js'
 //     flags: { isPast, activeWindow },
 //     queryFn: (signal) => getDriverStandings(season, signal),
 //   })
-export function useF1Query({ key, resource, flags, queryFn, enabled = true, select }) {
-  const { staleTime, gcTime, refetchInterval } = classify(resource, flags)
+export function useF1Query({ key, resource, flags, queryFn, enabled = true, select, refetchInterval }) {
+  const classified = classify(resource, flags)
   return useQuery({
     queryKey: key,
     queryFn: ({ signal }) => queryFn(signal),
-    staleTime,
-    gcTime,
-    refetchInterval,
+    staleTime: classified.staleTime,
+    gcTime: classified.gcTime,
+    refetchInterval: refetchInterval ?? classified.refetchInterval,
     enabled,
     select,
   })
