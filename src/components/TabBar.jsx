@@ -7,6 +7,7 @@ const TABS = [
   { to: '/results', label: 'Results' },
   { to: '/telemetry', label: 'Telemetry' },
   { to: '/track', label: 'Track' },
+  { to: '/compare', label: 'Compare' },
   { to: '/settings', label: 'Settings' },
 ]
 
