@@ -40,7 +40,12 @@ export async function fetchJson(path, { schema, signal } = {}) {
   }
 
   if (!res.ok) {
-    throw new HttpError(`HTTP ${res.status} for ${path}`, { status: res.status, url: path })
+    const err = new HttpError(`HTTP ${res.status} for ${path}`, { status: res.status, url: path })
+    if (res.status === 429) {
+      const ra = res.headers.get('retry-after')
+      err.retryAfter = ra != null && ra !== '' ? Number(ra) : null
+    }
+    throw err
   }
 
   const contentType = res.headers.get('content-type') || ''

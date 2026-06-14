@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { fetchJson } from './http.js'
+import { fetchJson as rawFetchJson } from './http.js'
+import { rateLimited } from './rateLimiter.js'
+
+// All OpenF1 requests go through the rate limiter (serialized, 429-aware) so the
+// app never trips OpenF1's Too Many Requests limit.
+const fetchJson = (path, opts) => rateLimited(() => rawFetchJson(path, opts))
 import { mapDrivers, mapRaceControl, mapStints, mapWeather } from '../mappers/openf1.map.js'
 
 // OpenF1 returns JSON numbers (not stringified like Jolpica). Schemas are lenient
