@@ -8,6 +8,7 @@ import Results from './routes/Results.jsx'
 import Telemetry from './routes/Telemetry.jsx'
 import Track from './routes/Track.jsx'
 import Compare from './routes/Compare.jsx'
+import Replay from './routes/Replay.jsx'
 import Profile from './routes/Profile.jsx'
 import Settings from './routes/Settings.jsx'
 
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/telemetry" element={<Telemetry />} />
         <Route path="/track" element={<Track />} />
         <Route path="/compare" element={<Compare />} />
+        <Route path="/replay" element={<Replay />} />
         <Route path="/profile/:type/:id" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/live" replace />} />

@@ -2,15 +2,20 @@ import { Link } from 'react-router-dom'
 import { fmtGap } from '../../lib/liveTiming.js'
 import { TyreBadge } from './TyreBadge.jsx'
 
-// Real-time order from OpenF1. Rows reorder as positions change; each row's
-// `delta` (most recent position change) is computed in buildLiveTimingRows.
-export function LiveTimingBoard({ rows, driverIdByNumber }) {
+// Order from OpenF1. Rows reorder as positions change; each row's `delta` is
+// computed by the caller (live: last change; replay: change as-of-time). `legend`
+// overrides the default LIVE banner (pass null to omit — e.g. for replay).
+export function LiveTimingBoard({ rows, driverIdByNumber, legend }) {
   return (
     <div>
-      <div style={legend}>
-        <span className="live-dot" style={{ width: 7, height: 7, borderRadius: 4, background: 'var(--live)', display: 'inline-block' }} />
-        LIVE · updates every 15s · OpenF1 data (slight delay vs broadcast)
-      </div>
+      {legend === undefined ? (
+        <div style={legendStyle}>
+          <span className="live-dot" style={{ width: 7, height: 7, borderRadius: 4, background: 'var(--live)', display: 'inline-block' }} />
+          LIVE · updates every 15s · OpenF1 data (slight delay vs broadcast)
+        </div>
+      ) : (
+        legend
+      )}
       <div style={panel}>
         {rows.map((r) => {
           const driverId = driverIdByNumber?.[r.number]
@@ -65,7 +70,7 @@ function Arrow({ delta }) {
   )
 }
 
-const legend = {
+const legendStyle = {
   display: 'flex',
   alignItems: 'center',
   gap: 8,
