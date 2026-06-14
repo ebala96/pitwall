@@ -67,6 +67,34 @@ export function sampleAt(series, t) {
   return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f }
 }
 
+// Trim a position path to a single lap: the first point that returns near the
+// start after the car has moved away. Returns the whole path if it never closes.
+export function oneLap(points) {
+  if (points.length < 20) return points
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  for (const p of points) {
+    if (p.x < minX) minX = p.x
+    if (p.x > maxX) maxX = p.x
+    if (p.y < minY) minY = p.y
+    if (p.y > maxY) maxY = p.y
+  }
+  const eps = Math.hypot(maxX - minX, maxY - minY) * 0.03
+  const s = points[0]
+  let movedAway = false
+  for (let i = 5; i < points.length; i++) {
+    const d = Math.hypot(points[i].x - s.x, points[i].y - s.y)
+    if (!movedAway) {
+      if (d > eps * 3) movedAway = true
+      continue
+    }
+    if (d < eps) return points.slice(0, i + 1)
+  }
+  return points
+}
+
 // Pick the driver with the most samples as the track outline reference.
 export function outlineDriver(byDriver) {
   let best = null

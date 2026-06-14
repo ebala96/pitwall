@@ -3,8 +3,14 @@ import { fetchJson as rawFetchJson } from './http.js'
 import { rateLimited } from './rateLimiter.js'
 
 // All OpenF1 requests go through the rate limiter (serialized, 429-aware) so the
-// app never trips OpenF1's Too Many Requests limit.
-const fetchJson = (path, opts) => rateLimited(() => rawFetchJson(path, opts))
+// app never trips OpenF1's Too Many Requests limit. OpenF1 returns 404
+// ("No results found.") for a query window with zero rows — treat that as an
+// empty result, not an error (otherwise empty windows flood the console + retry).
+const fetchJson = (path, opts) =>
+  rateLimited(() => rawFetchJson(path, opts)).catch((e) => {
+    if (e?.status === 404) return []
+    throw e
+  })
 import { mapDrivers, mapRaceControl, mapStints, mapWeather } from '../mappers/openf1.map.js'
 
 // OpenF1 returns JSON numbers (not stringified like Jolpica). Schemas are lenient

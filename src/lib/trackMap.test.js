@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { computeBounds, groupLocation, outlineDriver, project, sampleAt } from './trackMap.js'
+import { computeBounds, groupLocation, oneLap, outlineDriver, project, sampleAt } from './trackMap.js'
+
+describe('oneLap', () => {
+  it('trims to the first closed loop', () => {
+    // square loop (0,0)->(10,0)->(10,10)->(0,10)->back near (0,0), then a second lap
+    const loop = []
+    for (let i = 0; i < 40; i++) loop.push({ x: Math.cos((i / 40) * 2 * Math.PI) * 100, y: Math.sin((i / 40) * 2 * Math.PI) * 100 })
+    const twoLaps = [...loop, ...loop]
+    const trimmed = oneLap(twoLaps)
+    expect(trimmed.length).toBeLessThanOrEqual(loop.length + 2)
+    expect(trimmed.length).toBeGreaterThan(20)
+  })
+  it('returns short paths unchanged', () => {
+    expect(oneLap([{ x: 0, y: 0 }])).toHaveLength(1)
+  })
+})
 
 describe('groupLocation', () => {
   it('groups by driver with t relative to window start, dropping origin/null', () => {

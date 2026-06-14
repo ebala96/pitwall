@@ -1,44 +1,39 @@
-import { getDrivers, getLaps, getLocation } from '../api/openf1.js'
-import { fastestLapNumber } from '../lib/chartData.js'
+import { getLocation } from '../api/openf1.js'
+import { groupLocation, oneLap, outlineDriver } from '../lib/trackMap.js'
 import { useF1Query } from './useF1.js'
 
-// Circuit outline = one driver's single fastest lap (a clean, complete loop).
-// Falls back to a 100s mid-session window if no lap data. Cached (immutable).
+const WIN_MS = 110_000
+
+// Circuit outline: scan a few ~110s windows around mid-session (robust to sparse
+// data / 404-empty windows), pick the driver with the most points, trim to one
+// lap. One all-driver request per tried window; cached (immutable).
 export function useTrackOutline(sessionKey, start, end, enabled = true) {
   return useF1Query({
     key: ['trackOutline', sessionKey],
     resource: 'telemetry',
     flags: { isPast: true },
-    enabled: Boolean(sessionKey) && enabled,
+    enabled: Boolean(sessionKey) && enabled && start != null,
     queryFn: async (signal) => {
-      const drivers = await getDrivers(sessionKey, signal)
-      const num = Object.keys(drivers).map(Number)[0]
-      if (num == null) return { points: [] }
-
-      const laps = await getLaps({ sessionKey, driverNumber: num }, signal)
-      const lapNo = fastestLapNumber(laps)
-      const lap = laps.find((l) => l.lap_number === lapNo)
-
-      let dateStart
-      let dateEnd
-      if (lap?.date_start) {
-        const s = new Date(lap.date_start).getTime()
-        dateStart = lap.date_start
-        dateEnd = new Date(s + (lap.lap_duration ?? 100) * 1000 + 500).toISOString()
-      } else if (start) {
-        const mid = end ? start + (end - start) / 2 : start + 30 * 60000
-        dateStart = new Date(mid).toISOString()
-        dateEnd = new Date(mid + 100000).toISOString()
-      } else {
-        return { points: [] }
+      const mid = end ? start + (end - start) / 2 : start + 20 * 60000
+      for (const off of [0, -10 * 60000, 10 * 60000, -20 * 60000]) {
+        const ws = mid + off
+        const rows = await getLocation(
+          {
+            sessionKey,
+            dateStart: new Date(ws).toISOString(),
+            dateEnd: new Date(ws + WIN_MS).toISOString(),
+          },
+          signal,
+        )
+        if (rows.length) {
+          const by = groupLocation(rows, ws)
+          const num = outlineDriver(by)
+          if (num && by[num]?.length) {
+            return { points: oneLap(by[num].map((p) => ({ x: p.x, y: p.y }))) }
+          }
+        }
       }
-
-      const loc = await getLocation({ sessionKey, driverNumber: num, dateStart, dateEnd }, signal)
-      return {
-        points: loc
-          .filter((p) => p.x != null && p.y != null && (p.x !== 0 || p.y !== 0))
-          .map((p) => ({ x: p.x, y: p.y })),
-      }
+      return { points: [] }
     },
   })
 }
