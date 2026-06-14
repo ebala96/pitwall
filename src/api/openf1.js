@@ -79,6 +79,17 @@ const weatherSchema = z.object({
   date: z.string().optional(),
 })
 
+const carDataSchema = z.object({
+  driver_number: z.number(),
+  date: z.string(),
+  speed: z.number().nullable().optional(),
+  throttle: z.number().nullable().optional(),
+  brake: z.number().nullable().optional(),
+  n_gear: z.number().nullable().optional(),
+  rpm: z.number().nullable().optional(),
+  drs: z.number().nullable().optional(),
+})
+
 const raceControlSchema = z.object({
   date: z.string().optional(),
   category: z.string().nullable().optional(),
@@ -158,4 +169,13 @@ export async function getRaceControl(sessionKey, signal) {
     signal,
   })
   return mapRaceControl(raw)
+}
+
+// car_data is thousands of points/lap, so always fetch a bounded date window
+// (one lap). OpenF1 uses comparison operators in the query (date>=, date<=).
+export async function getCarData({ sessionKey, driverNumber, dateStart, dateEnd }, signal) {
+  let path = `/api/openf1/car_data?session_key=${sessionKey}&driver_number=${driverNumber}`
+  if (dateStart) path += `&date>=${encodeURIComponent(dateStart)}`
+  if (dateEnd) path += `&date<=${encodeURIComponent(dateEnd)}`
+  return fetchJson(path, { schema: z.array(carDataSchema), signal })
 }
