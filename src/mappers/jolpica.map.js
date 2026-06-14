@@ -1,4 +1,5 @@
 // Transform validated Jolpica responses into flat domain shapes the UI uses.
+import { isoOf } from '../lib/format.js'
 
 function code(driver) {
   return driver.code ?? driver.familyName.slice(0, 3).toUpperCase()
@@ -47,4 +48,40 @@ export function mapConstructorStandings(raw) {
 
 export function mapSeasons(raw) {
   return raw.MRData.SeasonTable.Seasons.map((s) => Number(s.season)).sort((a, b) => b - a)
+}
+
+const SESSION_LABELS = [
+  ['FirstPractice', 'FP1'],
+  ['SecondPractice', 'FP2'],
+  ['ThirdPractice', 'FP3'],
+  ['SprintQualifying', 'Sprint Quali'],
+  ['Sprint', 'Sprint'],
+  ['Qualifying', 'Quali'],
+]
+
+export function mapSchedule(raw) {
+  const races = raw.MRData.RaceTable.Races.map((r) => {
+    const sessions = []
+    for (const [key, label] of SESSION_LABELS) {
+      const s = r[key]
+      if (s?.date) sessions.push({ kind: key, label, start: isoOf(s.date, s.time) })
+    }
+    const raceStart = isoOf(r.date, r.time)
+    sessions.push({ kind: 'Race', label: 'Race', start: raceStart })
+    sessions.sort((a, b) => new Date(a.start) - new Date(b.start))
+    const loc = r.Circuit.Location
+    return {
+      season: Number(r.season),
+      round: Number(r.round),
+      name: r.raceName,
+      circuitId: r.Circuit.circuitId,
+      circuitName: r.Circuit.circuitName,
+      locality: loc?.locality ?? null,
+      country: loc?.country ?? null,
+      raceStart,
+      isSprint: sessions.some((s) => s.kind === 'Sprint'),
+      sessions,
+    }
+  })
+  return { season: races[0]?.season ?? null, races }
 }

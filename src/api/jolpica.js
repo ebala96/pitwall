@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import { fetchJson } from './http.js'
-import { mapConstructorStandings, mapDriverStandings, mapSeasons } from '../mappers/jolpica.map.js'
+import {
+  mapConstructorStandings,
+  mapDriverStandings,
+  mapSchedule,
+  mapSeasons,
+} from '../mappers/jolpica.map.js'
 
 // --- response schemas (validate shape; mappers transform/coerce) -------------
 
@@ -70,6 +75,39 @@ const seasonsResponse = z.object({
   }),
 })
 
+const Session = z.object({ date: z.string(), time: z.string().optional() }).optional()
+
+const scheduleResponse = z.object({
+  MRData: z.object({
+    RaceTable: z.object({
+      season: z.string().optional(),
+      Races: z.array(
+        z.object({
+          season: z.string(),
+          round: z.string(),
+          raceName: z.string(),
+          url: z.string().optional(),
+          date: z.string(),
+          time: z.string().optional(),
+          Circuit: z.object({
+            circuitId: z.string(),
+            circuitName: z.string(),
+            Location: z
+              .object({ locality: z.string().optional(), country: z.string().optional() })
+              .optional(),
+          }),
+          FirstPractice: Session,
+          SecondPractice: Session,
+          ThirdPractice: Session,
+          SprintQualifying: Session,
+          Sprint: Session,
+          Qualifying: Session,
+        }),
+      ),
+    }),
+  }),
+})
+
 // --- client functions (build /api/jolpi paths from typed params) -------------
 
 export async function getDriverStandings(season, signal) {
@@ -94,4 +132,9 @@ export async function listSeasons(signal) {
     signal,
   })
   return mapSeasons(raw)
+}
+
+export async function getSchedule(season, signal) {
+  const raw = await fetchJson(`/api/jolpi/${season}.json`, { schema: scheduleResponse, signal })
+  return mapSchedule(raw)
 }
