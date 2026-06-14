@@ -113,6 +113,85 @@ export function mapQualifying(raw) {
   }
 }
 
+export function mapDriverSeason(raw, season) {
+  const races = raw.MRData.RaceTable.Races
+  const first = races[0]?.Results[0]
+  const rounds = races.map((r) => {
+    const res = r.Results[0]
+    return {
+      round: Number(r.round),
+      raceName: r.raceName,
+      position: res.position ? Number(res.position) : null,
+      points: Number(res.points),
+      grid: res.grid ? Number(res.grid) : null,
+      status: res.status ?? null,
+      constructorId: res.Constructor.constructorId,
+      constructorName: res.Constructor.name,
+    }
+  })
+  return {
+    type: 'driver',
+    id: first?.Driver.driverId ?? null,
+    season: Number(season),
+    name: first ? `${first.Driver.givenName} ${first.Driver.familyName}` : null,
+    code: first ? code(first.Driver) : null,
+    number: first?.Driver.permanentNumber ?? null,
+    nationality: first?.Driver.nationality ?? null,
+    constructorId: rounds.at(-1)?.constructorId ?? null,
+    constructorName: rounds.at(-1)?.constructorName ?? null,
+    rounds,
+    stats: driverStats(rounds),
+  }
+}
+
+function driverStats(rounds) {
+  const finishes = rounds.filter((r) => r.position != null)
+  return {
+    starts: rounds.length,
+    wins: finishes.filter((r) => r.position === 1).length,
+    podiums: finishes.filter((r) => r.position <= 3).length,
+    poles: rounds.filter((r) => r.grid === 1).length,
+    points: rounds.reduce((s, r) => s + r.points, 0),
+    bestFinish: finishes.length ? Math.min(...finishes.map((r) => r.position)) : null,
+  }
+}
+
+export function mapConstructorSeason(raw, season) {
+  const races = raw.MRData.RaceTable.Races
+  const first = races[0]?.Results[0]?.Constructor
+  const rounds = races.map((r) => {
+    const positions = r.Results.map((x) => (x.position ? Number(x.position) : null)).filter(
+      (x) => x != null,
+    )
+    return {
+      round: Number(r.round),
+      raceName: r.raceName,
+      points: r.Results.reduce((s, x) => s + Number(x.points), 0),
+      position: positions.length ? Math.min(...positions) : null,
+      drivers: r.Results.map((x) => code(x.Driver)),
+    }
+  })
+  return {
+    type: 'constructor',
+    id: first?.constructorId ?? null,
+    season: Number(season),
+    name: first?.name ?? null,
+    constructorId: first?.constructorId ?? null,
+    constructorName: first?.name ?? null,
+    nationality: first?.nationality ?? null,
+    rounds,
+    stats: {
+      starts: rounds.length,
+      wins: rounds.filter((r) => r.position === 1).length,
+      podiums: rounds.filter((r) => r.position != null && r.position <= 3).length,
+      points: rounds.reduce((s, r) => s + r.points, 0),
+      bestFinish: rounds.some((r) => r.position != null)
+        ? Math.min(...rounds.filter((r) => r.position != null).map((r) => r.position))
+        : null,
+    },
+  }
+}
+
 export function mapSchedule(raw) {
   const races = raw.MRData.RaceTable.Races.map((r) => {
     const sessions = []

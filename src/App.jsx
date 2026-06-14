@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell.jsx'
+import { useReminders } from './hooks/useReminders.js'
 import Live from './routes/Live.jsx'
 import Schedule from './routes/Schedule.jsx'
 import Standings from './routes/Standings.jsx'
@@ -9,6 +10,7 @@ import Profile from './routes/Profile.jsx'
 import Settings from './routes/Settings.jsx'
 
 export default function App() {
+  useReminders()
   return (
     <AppShell>
       <Routes>

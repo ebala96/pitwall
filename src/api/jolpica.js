@@ -1,7 +1,9 @@
 import { z } from 'zod'
 import { fetchJson } from './http.js'
 import {
+  mapConstructorSeason,
   mapConstructorStandings,
+  mapDriverSeason,
   mapDriverStandings,
   mapQualifying,
   mapRaceResults,
@@ -214,4 +216,51 @@ export async function getQualifying(season, round, signal) {
     signal,
   })
   return mapQualifying(raw)
+}
+
+const seasonResultsResponse = z.object({
+  MRData: z.object({
+    RaceTable: z.object({
+      Races: z.array(
+        z.object({
+          round: z.string(),
+          raceName: z.string(),
+          date: z.string().optional(),
+          Circuit: z
+            .object({
+              circuitName: z.string().optional(),
+              Location: z.object({ country: z.string().optional() }).optional(),
+            })
+            .optional(),
+          Results: z.array(
+            z.object({
+              position: z.string().optional(),
+              points: z.string(),
+              grid: z.string().optional(),
+              status: z.string().optional(),
+              Driver,
+              Constructor,
+              FastestLap: z.object({ rank: z.string().optional() }).optional(),
+            }),
+          ),
+        }),
+      ),
+    }),
+  }),
+})
+
+export async function getDriverSeason(season, driverId, signal) {
+  const raw = await fetchJson(`/api/jolpi/${season}/drivers/${driverId}/results.json?limit=100`, {
+    schema: seasonResultsResponse,
+    signal,
+  })
+  return mapDriverSeason(raw, season)
+}
+
+export async function getConstructorSeason(season, constructorId, signal) {
+  const raw = await fetchJson(
+    `/api/jolpi/${season}/constructors/${constructorId}/results.json?limit=100`,
+    { schema: seasonResultsResponse, signal },
+  )
+  return mapConstructorSeason(raw, season)
 }

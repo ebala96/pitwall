@@ -1,21 +1,31 @@
 import { Link } from 'react-router-dom'
 import { formatPoints, pct } from '../../lib/format.js'
 import { getTeamColor } from '../../lib/teamColors.js'
+import { useSettings } from '../../hooks/useSettings.js'
 
 // `kind` = 'drivers' | 'constructors'. rows = mapped standings rows.
 export function StandingsTable({ kind, rows }) {
+  const settings = useSettings()
   const leaderPoints = rows[0]?.points ?? 0
   const isDrivers = kind === 'drivers'
+  const favId = isDrivers ? settings.favoriteDriver : settings.favoriteConstructor
 
   return (
     <div style={panel}>
       {rows.map((r) => {
         const color = getTeamColor(r.constructorId)
+        const id = isDrivers ? r.driverId : r.constructorId
+        const isFav = favId && id === favId
         const profileTo = isDrivers
           ? `/profile/driver/${r.driverId}`
           : `/profile/constructor/${r.constructorId}`
         return (
-          <Link key={isDrivers ? r.driverId : r.constructorId} to={profileTo} style={row}>
+          <Link
+            key={id}
+            to={profileTo}
+            style={{ ...row, background: isFav ? 'rgba(225,6,0,0.10)' : undefined }}
+          >
+            <span style={star}>{isFav ? '★' : ''}</span>
             <span className="tnum" style={pos}>
               {r.position ?? '—'}
             </span>
@@ -73,6 +83,7 @@ const row = {
 // Fixed-width columns so every gap bar starts at the same x regardless of name length.
 const ellipsis = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 0 auto' }
 
+const star = { width: 10, color: 'var(--yellow)', fontSize: 11, flex: '0 0 auto' }
 const pos = { width: 24, textAlign: 'right', color: 'var(--text-dim)', flex: '0 0 auto' }
 const bar = { width: 4, height: '60%', borderRadius: 2, flex: '0 0 auto' }
 const code = { width: 40, fontWeight: 700, flex: '0 0 auto' }
